@@ -22,10 +22,10 @@ sudo sh pack.sh --efi=<efi_partition> --root=<root_partition> [--no-compress] [-
 
 Parameters:
 
---`efi=<efi_partition>`: Path to the EFI partition.
---`root=<root_partition>`: Path to the root partition.
---`out=<output_dir>`: Directory where the installation will be saved. (Default: ./osconfig/)
---`no-compress`: Prevents compression of the installation. (_Note: The osflash.sh script only works with compressed installations!_)
+- `--efi=<efi_partition>`: Path to the EFI partition.
+- `--root=<root_partition>`: Path to the root partition.
+- `--out=<output_dir>`: Directory where the installation will be saved. (Default: ./osconfig/)
+- `--no-compress`: Prevents compression of the installation. (_Note: The osflash.sh script only works with compressed installations!_)
 
 Each saved installation will include an install.sh script, which allows you to directly flash the installation to a new system without using the osflash menu.
 
