@@ -191,34 +191,87 @@ function ask_for_partition() {
 
 ################################## USER INPUTS ##################################
 
+efi_part=none
+root_part=none
+mount_dir=none
+use_chroot=none
+swap_size=none
+installer=none
+noconfirm=false
+for ARG in "$@"; do
+  case $ARG in
+    --efi=*)
+      efi_part="${ARG#*=}"
+      ;;
+    --root=*)
+      root_part="${ARG#*=}"
+      ;;
+    --mount=*)
+      mount_dir="${ARG#*=}"
+      ;;
+    --chroot)
+      use_chroot="y"
+      ;;
+    --swap=*)
+      swap_size="${ARG#*=}"
+      ;;
+    --installer=*)
+      installer="${ARG#*=}"
+      ;;
+    --y)
+      noconfirm=true
+      ;;
+    *)
+      echo ">> Usage: $0 [--efi=<efi_partition>] [--root=<root_partition>] [--mount=<mount_dir>] [--chroot] [--swap=<swap_size>] [--intaller=<path_to_installer>] [--y]"
+      exit 1
+      ;;
+  esac
+done
+
 # Ask for EFI Partition
-clear
-ask_for_partition "EFI Partition" "fat -F 32" "33MiB" efi_part
-read -p "Done. Press 'ENTER' to continue." x
+if [ "$efi_part" == "none" ]; then
+    clear
+    ask_for_partition "EFI Partition" "fat -F 32" "33MiB" efi_part
+    if [ "$noconfirm" == "false" ]; then
+        read -p "Done. Press 'ENTER' to continue." x
+    fi
+fi
 
 # Ask for Root Partition
-clear
-ask_for_partition "ROOT Partition" "ext4" "16G" root_part
-read -p "Done. Press 'ENTER' to continue." x
+if [ "$root_part" == "none" ]; then
+    clear
+    ask_for_partition "ROOT Partition" "ext4" "16G" root_part
+    if [ "$noconfirm" == "false" ]; then
+        read -p "Done. Press 'ENTER' to continue." x
+    fi
+fi
 
 # Ask for chroot
-clear
-read -p "Do you want to chroot into your setup after installing? (y/n): " use_chroot
-use_chroot=${use_chroot:-"y"}
+if [ "$use_chroot" == "none" ]; then
+    clear
+    read -p "Do you want to chroot into your setup after installing? (y/n): " use_chroot
+    use_chroot=${use_chroot:-"y"}
+fi
 
 # Ask for mounting dir
-clear
-read -p "Where would you like to mount your installation after finishing? (Default: ./test): " mount_dir
-mount_dir=${mount_dir:-"./test"}
+if [ "$mount_dir" == "none" ]; then
+    clear
+    read -p "Where would you like to mount your installation after finishing? (Default: ./test): " mount_dir
+    mount_dir=${mount_dir:-"./test"}
+fi
 
 # Ask for swap size
-clear
-read -p "Size of swap (Default: 4G): " swap_size
-swap_size=${swap_size:-4G}
+if [ "$swap_size" == "none" ]; then
+    clear
+    read -p "Size of swap (Default: 4G): " swap_size
+    swap_size=${swap_size:-4G}
+fi
 
 # Ask for os
-clear
-ask_for_os installer
+if [ "$installer" == "none" ]; then
+    clear
+    ask_for_os installer
+fi
 
 # Output config
 clear
@@ -262,7 +315,9 @@ echo "  | Swap size:          $swap_size"
 echo "  | Installer:          $installer"
 
 echo ">> Running installation command: '$command'"
-read -p "Done. Press 'ENTER' to continue." x
+if [ "$noconfirm" == "false" ]; then
+    read -p "Done. Press 'ENTER' to continue." x
+fi
 
 clear
 
@@ -271,7 +326,12 @@ eval $command
 
 ################################## CLEANUP ##################################
 echo ">> Installation complete!"
-read -p "Do you wish to unmount your installation? (y/n): " do_unmount
+
+do_unmount="y"
+if [ "$noconfirm" == "false" ]; then
+    read -p "Do you wish to unmount your installation? (y/n): " do_unmount
+fi
+
 if [[ "$do_unmount" != "n" ]]; then
     sudo umount -R $mount_dir &> /dev/null
 fi
