@@ -198,6 +198,7 @@ use_chroot=none
 swap_size=none
 installer=none
 noconfirm=false
+script_chroot=false
 for ARG in "$@"; do
   case $ARG in
     --efi=*)
@@ -212,17 +213,26 @@ for ARG in "$@"; do
     --chroot)
       use_chroot="y"
       ;;
+    --no-chroot)
+      use_chroot="n"
+      ;;
     --swap=*)
       swap_size="${ARG#*=}"
       ;;
     --installer=*)
       installer="${ARG#*=}"
       ;;
+    --installation-runtime=*)
+      INSTALLATION_DIR="${ARG#*=}"
+      ;;
     --y)
       noconfirm=true
       ;;
+    --script-chroot)
+      script_chroot=true
+      ;;
     *)
-      echo ">> Usage: $0 [--efi=<efi_partition>] [--root=<root_partition>] [--mount=<mount_dir>] [--chroot] [--swap=<swap_size>] [--intaller=<path_to_installer>] [--y]"
+      echo ">> Usage: $0 [--efi=<efi_partition>] [--root=<root_partition>] [--script-chroot] [--mount=<mount_dir>] [--chroot] [--no-chroot] [--swap=<swap_size>] [--intaller=<path_to_installer>] [--installation-runtime=<runtime_dir>] [--y]"
       exit 1
       ;;
   esac
@@ -322,12 +332,19 @@ fi
 clear
 
 eval $command
+
+if [[ "$script_chroot" != "false" ]]; then
+    echo ">> Script to run in chroot."
+    sudo arch-chroot "$mount_dir" bash <<EOF
+$(cat)
+EOF
+fi
 ################################## RUN INSTALLATION ##################################
 
 ################################## CLEANUP ##################################
 echo ">> Installation complete!"
 
-do_unmount="y"
+do_unmount="n"
 if [ "$noconfirm" == "false" ]; then
     read -p "Do you wish to unmount your installation? (y/n): " do_unmount
 fi
